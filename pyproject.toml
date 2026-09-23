@@ -1,0 +1,22 @@
+[project]
+name = "laya-api"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Iaroslav Rykhalskyi", email = "rikhalskiy@gmail.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi>=0.141.1",
+    "laya>=0.3.5",
+    "uvicorn>=0.53.0",
+]
+
+[project.scripts]
+laya-api = "laya_api:main"
+laya-api-server = "laya_api.server:run"
+
+[build-system]
+requires = ["uv_build>=0.12.9,<0.13.0"]
+build-backend = "uv_build"

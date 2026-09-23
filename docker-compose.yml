@@ -1,0 +1,15 @@
+services:
+  laya-api:
+    build: .
+    ports:
+      - "${LAYA_HOST_PORT:-8001}:8000"
+    env_file:
+      - .env
+    environment:
+      LAYA_API_KEY_DATABASE: /app/data/api_keys.db
+    volumes:
+      - laya_api_data:/app/data
+    restart: unless-stopped
+
+volumes:
+  laya_api_data:
