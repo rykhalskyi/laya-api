@@ -220,3 +220,6 @@ __marimo__/
 # Local API-key database
 data/*.db
 data/*.db-*
+
+# Local request files containing API keys
+src/laya_api/test*.http

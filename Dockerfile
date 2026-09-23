@@ -10,7 +10,7 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync --locked --no-install-project
 
 COPY src ./src
-COPY README.md ./
+COPY README.md LICENSE THIRD_PARTY_NOTICES.md ./
 RUN uv sync --locked
 
 EXPOSE 8000

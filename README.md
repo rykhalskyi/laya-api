@@ -67,3 +67,15 @@ The Compose file stores the SQLite database in the persistent
 `laya_api_data` volume. The `.env` file is not copied into the image or tracked
 by git. Use a Docker or hosting-provider secret instead of `.env` when your
 hosting platform provides one.
+
+## License and attribution
+
+`laya-api` is licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE).
+
+This project builds on [Laya](https://github.com/NandhaKishorM/laya), a
+multilingual System 1 decision engine by [Convai Innovations](https://huggingface.co/convaiinnovations),
+which is licensed under Apache-2.0 and used here as an unmodified dependency.
+Model weights are loaded at runtime from https://huggingface.co/convaiinnovations/laya.
+
+See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for details. This project is
+not affiliated with or endorsed by Convai Innovations.

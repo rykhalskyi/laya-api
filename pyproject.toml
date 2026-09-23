@@ -1,8 +1,10 @@
 [project]
 name = "laya-api"
 version = "0.1.0"
-description = "Add your description here"
+description = "HTTP API service exposing the Laya decision engine for routing and typed decisions"
 readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md"]
 authors = [
     { name = "Iaroslav Rykhalskyi", email = "rikhalskiy@gmail.com" }
 ]

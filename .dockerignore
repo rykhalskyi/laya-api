@@ -7,4 +7,4 @@ data
 Dockerfile
 docker-compose.yml
 requests.http
-src/laya_api/test.http
+src/laya_api/test*.http
