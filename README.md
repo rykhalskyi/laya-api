@@ -44,6 +44,31 @@ The SQLite file must be on persistent storage in production. If the deployment
 has multiple server instances or needs high write concurrency, move this store
 to PostgreSQL later; the API-key interface can remain the same.
 
+### Key lifetime, rate limits, and audit logs
+
+New client keys expire after `LAYA_KEY_TTL_DAYS` days (default `90`); set it to
+`none` to issue non-expiring keys. Existing keys created before this setting was
+added have no expiry and keep working. There is no renewal: when a key expires,
+mint a new one and hand it to the client.
+
+```sh
+curl -X POST http://127.0.0.1:8000/admin/keys \
+	-H "X-API-Key: $LAYA_ADMIN_KEY" \
+	-H "Content-Type: application/json" \
+	-d '{"name":"my-production-client"}'
+```
+
+Requests are rate limited per client IP (`CF-Connecting-IP`, then the socket
+peer): `LAYA_RATE_LIMIT_ADMIN` (default `10`) on `/admin/*` and
+`LAYA_RATE_LIMIT_PREDICT` (default `120`) on `/predict`, per
+`LAYA_RATE_LIMIT_WINDOW` seconds (default `60`). Over-limit requests get `429`
+with a `Retry-After` header.
+
+Audit events (key created/revoked, failed auth, rate-limit trips) are written to
+stdout as `laya_api` log lines and captured by Docker. Keys are never logged;
+only an 8-character fingerprint of their SHA-256 hash is recorded. Set
+`LAYA_LOG_LEVEL` (default `INFO`) to adjust verbosity.
+
 ## Docker deployment
 
 On the server, create a private environment file and generate the admin key:
