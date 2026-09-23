@@ -6,6 +6,5 @@ data
 .env
 Dockerfile
 docker-compose.yml
-README.md
 requests.http
 src/laya_api/test.http

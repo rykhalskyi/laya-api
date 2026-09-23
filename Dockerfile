@@ -10,6 +10,7 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync --locked --no-install-project
 
 COPY src ./src
+COPY README.md ./
 RUN uv sync --locked
 
 EXPOSE 8000
