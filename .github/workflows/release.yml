@@ -1,0 +1,116 @@
+name: Publish container image
+
+# Builds the Dockerfile, pushes it to GitHub Container Registry, and publishes a
+# GitHub release carrying the image digest as an asset:
+#
+#   laya-api-<version>.digest   ->  sha256:...
+#
+# The homelab repo (rykhalskyi/homelab) reads that asset to pin the exact image
+# in infra/laya-api/versions.env, so version and digest can never drift.
+#
+# Publish a release:
+#   git tag v0.1.0 && git push origin v0.1.0
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write   # create the release + digest asset
+  packages: write   # push to GHCR
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    name: Build and push image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Write digest asset
+        if: github.ref_type == 'tag'
+        id: digest
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          version="${VERSION#v}"
+          file="laya-api-${version}.digest"
+          printf '%s\n' "${{ steps.build.outputs.digest }}" > "$file"
+          echo "file=${file}" >> "$GITHUB_OUTPUT"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+      - name: Publish release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          VERSION: ${{ steps.digest.outputs.version }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          set -euo pipefail
+          notes="$(mktemp)"
+          {
+            printf 'Container image: `%s:%s`\n\n' "$IMAGE" "$VERSION"
+            printf 'Digest: `%s`\n\n' "$DIGEST"
+            printf 'Pinned for deployment in rykhalskyi/homelab via infra/laya-api/versions.env.\n'
+          } > "$notes"
+          tag="${{ github.ref_name }}"
+          file="${{ steps.digest.outputs.file }}"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" "${file}#${file}" --clobber
+          else
+            gh release create "$tag" "${file}#${file}" \
+              --title "$tag" --notes-file "$notes"
+          fi
+
+      - name: Summary
+        run: |
+          {
+            echo "### laya-api image published"
+            echo ""
+            echo "Digest: \`${{ steps.build.outputs.digest }}\`"
+            echo ""
+            echo "Tags:"
+            echo '```'
+            echo "${{ steps.meta.outputs.tags }}"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
